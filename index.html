@@ -7,9 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- CSS only -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
     <!-- JavaScript Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+        crossorigin="anonymous"></script>
 
     <title>Whatsapp Bot</title>
 </head>
@@ -24,13 +27,13 @@
             </div>
             <div class="col-sm-6">
                 <p id="chat">
-                    <ul id="messageslist">
-                        <li>Uma Mensagem</li>
-                    </ul>
-                    <br>
+                <ul id="messageslist">
+                    <li>Uma Mensagem</li>
+                </ul>
+                <br>
 
-                    <input type="text" name="sendmessage" id="sendmessage">
-                    <input type="submit " value="Enviar" />
+                <input type="text" name="sendmessage" id="sendmessage">
+                <input type="submit " value="Enviar" />
                 </p>
             </div>
             <div class="col-sm-2"></div>
@@ -49,20 +52,22 @@
     var chatWebSocket = new WebSocket("ws://localhost:8080 ")
     var allchats = {};
 
-    chatWebSocket.onmessage = function(message) {
+    chatWebSocket.onmessage = function (message) {
         let obj = JSON.parse(message.data)
 
-        if (obj.type === "chatlist") {
-            allchats = obj.data;
-            var chatlist = '';
-            var chat = [];
-            obj.data.forEach(m => {
-                let chatId = m.id.replace("@", "")
-                chatlist += `<li onclick="loadChat('${chatId}')" class="list-group-item">${m.name}</li>`
-
-            })
-            document.getElementById("chatlist").innerHTML = chatlist
+        if (obj.type === "chat") {
+            let chat = obj.data;
+            allchats[chat.chatId].msgs.push(chat)
         }
+
+        if (obj.type === "chatlist") {
+            obj.data.forEach(o => {
+                allchats[o.id] = o;
+            });
+
+            handleLoadChats(obj);
+        }
+
         if (obj.type === "info") {
             msg = document.getElementById("message")
             msg.innerHTML += `<br>===<br>${obj.data}`
@@ -72,7 +77,16 @@
         }
     }
 
-    document.getElementById("sendmessage").addEventListener('keyup', function(e) {
+    const handleLoadChats = (obj) => {
+        for (m in allchats) {
+            let chat = allchats[m];
+            let chatId = chat.id.replace("@", "")
+            chatlist += `<li onclick="loadChat('${chatId}')" class="list-group-item">${chat.name}</li>`
+        }
+        document.getElementById("chatlist").innerHTML = chatlist
+    }
+
+    document.getElementById("sendmessage").addEventListener('keyup', function (e) {
         if (e.keyCode == 13) {
             msg.innerText = e.target.value
             chatWebSocket.send(e.target.value)
@@ -86,9 +100,8 @@
     }
 
     function loadChat(id) {
-        let chat = allchats.find(c => {
-            return c.id.replace("@", "") == id;
-        })
+        id = id.replace(/([cg]).us/, "@$1.us");
+        let chat = allchats[id];
 
         var chatmessages = document.getElementById('messageslist')
         var chatcontent = ""

@@ -10,7 +10,7 @@ server.on('connection', (socket) => {
 
 const onConnection = (socket) => {
     socket.on('message', (message) => {
-        // Lógica de quando receber mensagem do server
+        // Lógica de quando o cliente envia mensagem
     })
 
     socket.on('close', () => {
